@@ -69,7 +69,15 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    user_email = serializers.ReadOnlyField(source='user.email')
+    product_name = serializers.ReadOnlyField(source='product.name')
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['id', 'user', 'user_email', 'product', 'product_name', 'quantity', 'price', 'date_ordered']
 
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user if request else None
+        validated_data['user'] = user
+        return super().create(validated_data)

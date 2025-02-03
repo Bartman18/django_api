@@ -6,10 +6,11 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.views import TokenRefreshView
 
-from .models import Product
+from .models import Product, Order
 # from django.contrib.auth.models import User
-from .serializers import RegisterSerializer, LoginSerializer, ProductSerializer
+from .serializers import RegisterSerializer, LoginSerializer, ProductSerializer, OrderSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -74,7 +75,18 @@ class LogoutView(APIView):
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class CustomTokenRefreshView(TokenRefreshView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
 
+        if response.status_code == status.HTTP_200_OK:
+            response.data['message'] = "Token refreshed successfully"
+            response.data['user'] = {
+                "username": request.user.username,
+                "email": request.user.email,
+            }
+
+        return response
 
 
 
@@ -86,8 +98,36 @@ class ProductAddView(generics.CreateAPIView):
 class ProductUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    lookup_field = "pk"
 
-class ProductDeleteView(generics.DestroyAPIView):
+class ProductDeleteView(generics.RetrieveDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    lookup_field = "pk"  # DRF
 
+    def destroy(self, request, *args, **kwargs):
+        product = self.get_object()
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+
+
+class OrderCreateView(generics.CreateAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Wymaga zalogowania
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+class OrderDestroyView(generics.DestroyAPIView):
+    queryset = Order.objects.g
+    serializer_class = OrderSerializer
+
+
+    permission_classes = [permissions.IsAuthenticated]
+    def destroy(self, request, *args, **kwargs):
+
+        order = self.get_object()
+        order.delete()

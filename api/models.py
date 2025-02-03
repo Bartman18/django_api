@@ -34,7 +34,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 class Product(models.Model):
-    product_id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=100)
     price = models.IntegerField()
     def __str__(self):
@@ -42,7 +41,6 @@ class Product(models.Model):
 
 
 class Order(models.Model):
-    order_id = models.IntegerField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
@@ -53,7 +51,6 @@ class Order(models.Model):
         return self.order_id
 
 class WashingType(models.Model):
-    type_id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=100)
     price = models.IntegerField()
     def __str__(self):
@@ -61,7 +58,6 @@ class WashingType(models.Model):
 
 
 class Reservation(models.Model):
-    reservation_id = models.IntegerField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     type_id = models.ForeignKey(WashingType, on_delete=models.CASCADE)
     date = models.DateField()
