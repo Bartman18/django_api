@@ -64,7 +64,7 @@ class TokenSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['product_id', 'name', 'price']
+        fields = ['name', 'price', 'quantity']
 
 
 

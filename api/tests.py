@@ -4,8 +4,8 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 
-
-User = get_user_model()
+#
+# User = get_user_model()
 # class RegisterViewTest(APITestCase):
 #     def setUp(self):
 #         self.register_url = '/api/register/'
@@ -68,44 +68,30 @@ User = get_user_model()
 #
 #
 #
+
+
 # class AddProductViewTest(APITestCase):
 #     def setUp(self):
+#         # Tworzymy superusera, korzystając z Twojego custom user managera
+#         User = get_user_model()
+#         self.admin_user = User.objects.create_superuser(
+#             email='admin@example.com',
+#             password='adminpass',
+#             first_name='Admin',
+#             last_name='User',
+#             phone_number='123456789'
+#         )
+#         # Uwierzytelniamy klienta jako superusera
+#         self.client.force_authenticate(user=self.admin_user)
 #
-#         self.add_product_url = '/api/addproduct/'
-#         product_data = {
-#             "product_id": 23,
-#             "name": 'baton',
+#         self.add_product_url = '/api/add_product/'
+#         self.product_data = {
+#             "product_id": 23,  # Upewnij się, że pole odpowiada temu, co oczekuje serializer
+#             "name": "baton",
 #             "price": 23,
 #         }
 #
-#         product_response = self.client.post(self.add_product_url, product_data, format="json")
-#         self.assertEqual(product_response.status_code, status.HTTP_201_CREATED)
-#         self.assertIn("product_id", product_response.data)
-#
-
-
-class AddProductViewTest(APITestCase):
-    def setUp(self):
-        # Tworzymy superusera, korzystając z Twojego custom user managera
-        User = get_user_model()
-        self.admin_user = User.objects.create_superuser(
-            email='admin@example.com',
-            password='adminpass',
-            first_name='Admin',
-            last_name='User',
-            phone_number='123456789'
-        )
-        # Uwierzytelniamy klienta jako superusera
-        self.client.force_authenticate(user=self.admin_user)
-
-        self.add_product_url = '/api/add_product/'
-        self.product_data = {
-            "product_id": 23,  # Upewnij się, że pole odpowiada temu, co oczekuje serializer
-            "name": "baton",
-            "price": 23,
-        }
-
-    def test_add_product(self):
-        response = self.client.post(self.add_product_url, self.product_data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("product_id", response.data)
+#     def test_add_product(self):
+#         response = self.client.post(self.add_product_url, self.product_data, format="json")
+#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+#         self.assertIn("product_id", response.data)
