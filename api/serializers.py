@@ -50,7 +50,10 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
-
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ( 'first_name', 'last_name', 'phone_number', 'email')
 
 
 class TokenSerializer(serializers.ModelSerializer):
