@@ -1,17 +1,17 @@
 
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAdminUser, AllowAny
-
-
+import datetime
+from rest_framework import generics
 from rest_framework.response import Response
-
+from rest_framework import status
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .models import Product, Order
-
-from .serializers import RegisterSerializer, LoginSerializer, ProductSerializer, OrderSerializer
+# from django.contrib.auth.models import User
+from .serializers import RegisterSerializer, LoginSerializer, ProductSerializer, OrderSerializer, ProfileSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -78,11 +78,22 @@ class LoginView(APIView):
 #         except TokenError:
 #             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "User logged out successfully"}, status=status.HTTP_200_OK)
+        except KeyError:
+            return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
+        except TokenError:
+            return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+
+    queryset =User.objects.all()
+    serializer_class = ProfileSerializer
 
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
@@ -129,23 +140,80 @@ class ProductDeleteView(generics.DestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [IsAdminUser]
+
+    def create(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+
+        instance = self.queryset.get(pk=kwargs.get('pk'))
+        serializer = self.serializer_class(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        permissions = [AllowAny]
+        queryset = Product.objects.all()
+        serializer = self.serializer_class(queryset, many=True)
+        search_field = ["type", "name"]
+        ordering_field = ["price", "type"]
+
+
+    def destroy(self, request, *args, **kwargs):
+        product = self.get_object()
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
 
-# class OrderCreateView(generics.CreateAPIView):
-#     serializer_class = OrderSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-#
-#     def perform_create(self, serializer):
-#         serializer.save(user=self.request.user)
-# class OrderDestroyView(generics.DestroyAPIView):
-#     queryset = Order.objects.all()
-#     serializer_class = OrderSerializer
-#
-#
-#     permission_classes = [permissions.IsAuthenticated]
-#     def destroy(self, request, *args, **kwargs):
-#
-#         order = self.get_object()
-#         order.delete()
+class OrderViewSet(viewsets.ModelViewSet):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        order_id = kwargs.get('pk')
+        order = Order.objects.filter(id=order_id,
+                                     user=request.user).first()
+
+        if not order:
+            return Response({"error": "You can't delete your order after 30 minutes."},
+                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        now_time = timezone.now()
+        if now_time - order.date_ordered >= timezone.timedelta(minutes=30):
+            return Response({"error": "You can't delete you order"},
+                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        order.delete()
+        return Response({"message": "Order deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+    def get_queryset(self):
+
+        user = self.request.user
+        if user.is_staff:
+            return Order.objects.all()
+        return Order.objects.filter(user=user)
+
+    @action(detail=False, methods=['GET'])
+    def my_orders(self, request):
+
+        orders = self.get_queryset()
+        serializer = self.get_serializer(orders, many=True)
+        return Response(serializer.data)
+
+
+
