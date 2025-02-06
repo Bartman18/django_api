@@ -110,69 +110,59 @@ class CustomTokenRefreshView(TokenRefreshView):
 
 
 
-class ProductAddView(generics.CreateAPIView):
-    permission_classes = [IsAdminUser]
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-
-
-class ProductListView(generics.ListAPIView):
-    permission_classes = [AllowAny]
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-
-
-class ProductUpdateView(generics.RetrieveUpdateAPIView):
-    permission_classes = [IsAdminUser]
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-    lookup_field = "pk"
-
-class ProductDeleteView(generics.DestroyAPIView):
-    permission_classes = [IsAdminUser]
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-    lookup_field = "pk"  # DRF
-
-    def destroy(self, request, *args, **kwargs):
-        product = self.get_object()
-        product.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+# class ProductAddView(generics.CreateAPIView):
+#     permission_classes = [IsAdminUser]
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+#
+#
+# class ProductListView(generics.ListAPIView):
+#     permission_classes = [AllowAny]
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+#
+#
+# class ProductUpdateView(generics.RetrieveUpdateAPIView):
+#     permission_classes = [IsAdminUser]
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+#     lookup_field = "pk"
+#
+# class ProductDeleteView(generics.DestroyAPIView):
+#     permission_classes = [IsAdminUser]
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+#     lookup_field = "pk"  # DRF
+#
+#     def destroy(self, request, *args, **kwargs):
+#         product = self.get_object()
+#         product.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [IsAdminUser]
 
-    def create(self, request, *args, **kwargs):
+    def get_queryset(self):
+        return Product.objects.all()
 
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]
+
 
     def update(self, request, *args, **kwargs):
-
-        instance = self.queryset.get(pk=kwargs.get('pk'))
-        serializer = self.serializer_class(instance, data=request.data, partial=True)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
-    def get_queryset(self):
-        permissions = [AllowAny]
-        queryset = Product.objects.all()
-        serializer = self.serializer_class(queryset, many=True)
-        search_field = ["type", "name"]
-        ordering_field = ["price", "type"]
-
-
     def destroy(self, request, *args, **kwargs):
         product = self.get_object()
         product.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response( status=status.HTTP_204_NO_CONTENT)
 
 
 
