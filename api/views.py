@@ -8,10 +8,13 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenRefreshView
+from django.shortcuts import get_object_or_404
 
-from .models import Product, Order
+
+from .models import Product, Order, Reservation
 # from django.contrib.auth.models import User
-from .serializers import RegisterSerializer, LoginSerializer, ProductSerializer, OrderSerializer, ProfileSerializer
+from .serializers import RegisterSerializer, LoginSerializer, ProductSerializer, OrderSerializer, ProfileSerializer, \
+    ReservationSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -109,37 +112,6 @@ class CustomTokenRefreshView(TokenRefreshView):
         return response
 
 
-
-# class ProductAddView(generics.CreateAPIView):
-#     permission_classes = [IsAdminUser]
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-#
-#
-# class ProductListView(generics.ListAPIView):
-#     permission_classes = [AllowAny]
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-#
-#
-# class ProductUpdateView(generics.RetrieveUpdateAPIView):
-#     permission_classes = [IsAdminUser]
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-#     lookup_field = "pk"
-#
-# class ProductDeleteView(generics.DestroyAPIView):
-#     permission_classes = [IsAdminUser]
-#     queryset = Product.objects.all()
-#     serializer_class = ProductSerializer
-#     lookup_field = "pk"  # DRF
-#
-#     def destroy(self, request, *args, **kwargs):
-#         product = self.get_object()
-#         product.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
 
@@ -205,5 +177,37 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(orders, many=True)
         return Response(serializer.data)
 
+
+
+class ReservationViewSet(viewsets.ModelViewSet):
+    serializer_class = ReservationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Reservation.objects.all()
+        return Reservation.objects.filter(user=user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        reservation = get_object_or_404(Reservation, id=kwargs.get('pk'))
+        reservation.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=False)  # Pełne aktualizacje wymagają wszystkich pól
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)  # Częściowa aktualizacja
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 

@@ -3,9 +3,11 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 # from api.models import User
-from django.contrib.auth import get_user_model
+from django.contrib.auth import
+from django.utils import timezone
 
-from api.models import Product, Order
+
+from api.models import Product, Order, Reservation
 
 User = get_user_model()  # Use the custom user model
 
@@ -84,3 +86,14 @@ class OrderSerializer(serializers.ModelSerializer):
         user = request.user if request else None
         validated_data['user'] = user
         return super().create(validated_data)
+
+
+class ReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
+        fields = ['user', 'type', 'date']
+
+        def validate(self, data):
+            if 'date' in data and data['date'] <= timezone.now():
+                raise serializers.ValidationError({"date": "Date must be in the future."})
+            return data
