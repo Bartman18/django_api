@@ -16,6 +16,9 @@
 
             <div v-else class="form-container">
               <input type="email" v-model="registerEmail" placeholder="Email" class="input-field" required>
+              <input type="text" v-model="firstName" placeholder="Imię" class="input-field" required>
+              <input type="text" v-model="lastName" placeholder="Nazwisko" class="input-field" required>
+              <input type="tel" v-model="phoneNumber" placeholder="Numer telefonu" class="input-field" required>
               <input type="password" v-model="registerPassword" placeholder="Hasło" class="input-field" required>
               <input type="password" v-model="confirmPassword" placeholder="Powtórz hasło" class="input-field" required>
               <button @click="handleRegister" class="submit-btn">Zarejestruj się</button>
@@ -46,20 +49,45 @@ const isLoginMode = ref(true);
 const loginEmail = ref("");
 const loginPassword = ref("");
 const registerEmail = ref("");
+const firstName = ref("");
+const lastName = ref("");
+const phoneNumber = ref("");
 const registerPassword = ref("");
 const confirmPassword = ref("");
 
-const handleLogin = () => {
+const handleLogin = async () => {
   if (!loginEmail.value || !loginPassword.value) {
     alert("Proszę wypełnić wszystkie pola!");
     return;
   }
-  alert(`Logowanie: ${loginEmail.value}`);
-  emit("close");
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/token/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: loginEmail.value,
+        password: loginPassword.value
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      localStorage.setItem("access_token", data.access);
+      localStorage.setItem("refresh_token", data.refresh);
+      alert("Zalogowano pomyślnie!");
+      emit("close");
+    } else {
+      alert(data.message || "Błąd logowania");
+    }
+  } catch (error) {
+    alert("Błąd połączenia z serwerem");
+  }
 };
 
-const handleRegister = () => {
-  if (!registerEmail.value || !registerPassword.value || !confirmPassword.value) {
+const handleRegister = async () => {
+  if (!registerEmail.value || !registerPassword.value || !confirmPassword.value || !firstName.value || !lastName.value || !phoneNumber.value) {
     alert("Proszę wypełnić wszystkie pola!");
     return;
   }
@@ -67,15 +95,38 @@ const handleRegister = () => {
     alert("Hasła się nie zgadzają!");
     return;
   }
-  alert(`Rejestracja: ${registerEmail.value}`);
-  emit("close");
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/register/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: registerEmail.value,
+        first_name: firstName.value,
+        last_name: lastName.value,
+        phone_number: phoneNumber.value,
+        password: registerPassword.value,
+        password2: confirmPassword.value
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Rejestracja zakończona sukcesem!");
+      emit("close");
+    } else {
+      alert(data.message || "Błąd rejestracji");
+    }
+  } catch (error) {
+    alert("Błąd połączenia z serwerem");
+  }
 };
 
 const toggleMode = () => {
   isLoginMode.value = !isLoginMode.value;
 };
 </script>
-
 <style>
 /* Modal CSS */
 .modal-overlay {

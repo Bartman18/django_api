@@ -3,16 +3,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAdminUser, AllowAny
-import datetime
+from datetime import timezone
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.shortcuts import get_object_or_404
-
-
+from rest_framework.decorators import action
 from .models import Product, Order, Reservation
-# from django.contrib.auth.models import User
 from .serializers import RegisterSerializer, LoginSerializer, ProductSerializer, OrderSerializer, ProfileSerializer, \
     ReservationSerializer
 from django.contrib.auth import get_user_model
@@ -65,21 +63,7 @@ class LoginView(APIView):
 
 
 
-# class LogoutView(APIView):
-#     permission_classes = [IsAuthenticated]
-#
-#     def post(self, request):
-#         try:
-#             refresh_token = request.data.get("refresh")
-#             if not refresh_token:
-#                 return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
-#
-#             token = RefreshToken(refresh_token)
-#             token.blacklist()
-#
-#             return Response({"message": "User logged out successfully"}, status=status.HTTP_200_OK)
-#         except TokenError:
-#             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+
 
     def post(self, request):
         try:
