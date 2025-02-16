@@ -2,6 +2,7 @@
   <div class="app-container">
     <Navbar @openModal="showLoginModal = true" />
     <Test v-if="showLoginModal" :showModal="showLoginModal" @close="showLoginModal = false" />
+
     <router-view />
     <Footer/>
   </div>
@@ -10,7 +11,7 @@
 <script setup>
 import { ref } from "vue";
 import Navbar from "./components/Navbar.vue";
-import Test from "./components/Test.vue";
+import Test from "./components/LoginRegister.vue";
 import Footer from "./components/footer.vue"
 
 const showLoginModal = ref(false);
