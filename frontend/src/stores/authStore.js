@@ -47,6 +47,10 @@ export const useAuthStore = defineStore('auth', {
         const data = await response.json();
 
         if (response.ok) {
+          localStorage.setItem("access_token", data.access);
+          localStorage.setItem("refresh_token", data.refresh);
+          this.accessToken = data.access;
+          this.isAuthenticated = true;
           return true;
         } else {
           return data.message || "Błąd rejestracji";
