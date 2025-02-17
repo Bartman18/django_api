@@ -1,4 +1,6 @@
 import { defineStore } from 'pinia';
+import router from "@/router/index.js";
+import Home from "@/views/Home.vue";
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -98,6 +100,8 @@ export const useAuthStore = defineStore('auth', {
       this.user = null;
       this.isAuthenticated = false;
       this.accessToken = null;
+      router.push({ path: '/home' });
+
     },
   },
 });
